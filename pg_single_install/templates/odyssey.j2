@@ -1,0 +1,372 @@
+###
+### Odyssey configuration file.
+###
+
+#
+# Include files.
+#
+# Include one or more configuration files. Include files can
+# include other files.
+#
+# include "path"
+#
+
+###
+### SERVICE
+###
+
+#
+# Start as a daemon.
+#
+# By default Odyssey does not run as a daemon. Set to 'yes' to enable.
+#
+daemonize {{ PG_ODYSSEY_DEMON }} 
+
+#
+# Process priority.
+#
+# Set Odyssey parent process and threads priority.
+#
+# priority {{ PG_ODYSSEY_PRIORITY }}
+
+#
+# Pid file.
+#
+# If pid_file is specified, Odyssey will write its process id to
+# the specified file at startup.
+#
+# pid_file "/var/run/odyssey.pid"
+#
+
+#
+# UNIX socket directory.
+#
+# If unix_socket_dir is specified, Odyssey will enable UNIX socket
+# communications. Specified directory path will be used for
+# searching socket files.
+#
+unix_socket_dir "{{ PG_ODYSSEY_SOCKET_DIR }}"
+
+#
+# UNIX socket file mode.
+#
+# Set `unix_socket_mode` file mode to any created unix files.
+#
+unix_socket_mode "{{ PG_ODYSSEY_SOCKET_MODE }}"
+
+###
+### LOGGING
+###
+
+#
+# Log file.
+#
+# If log_file is specified, Odyssey will additionally use it to write
+# log events.
+#
+log_file "{{ PG_ODYSSEY_LOG_DIR }}"
+#
+
+#
+# Log text format.
+#
+# Odyssey allows to configure log text format. This could be useful to
+# support external log parser format. Format string can contain plain
+# text, escape symbols and format flags.
+#
+# Supported flags:
+#
+# %n = unixtime
+# %t = timestamp with date
+# %p = process ID
+# %i = client ID
+# %s = server ID
+# %u = user name
+# %d = database name
+# %c = context
+# %l = level (error, warning, debug)
+# %m = message
+# %M = message tskv
+# %r = client port
+# %h = client host
+#
+log_format "{{ PG_ODYSSEY_LOG_MODE }}\n"
+
+#
+# Log to stdout.
+#
+# Set to 'yes' if you need to additionally display log output in stdout.
+# Enabled by default.
+#
+log_to_stdout {{ PG_ODYSSEY_LOG_STDOUT }}
+
+#
+# Log to system logger.
+#
+# To enable syslog(3) usage, set log_syslog to 'yes'. Additionally set
+# log_syslog_ident and log_syslog_facility.
+#
+log_syslog {{ PG_ODYSSEY_SYSLOG }}
+log_syslog_ident "{{ PG_ODYSSEY_SYSLOG_IDENT }}"
+log_syslog_facility "{{ PG_ODYSSEY_FACILITY }}"
+
+#
+# Verbose logging.
+#
+# Enable verbose logging of all events, which will generate a log of
+# detailed information useful for development or testing.
+#
+# It is also possible to enable verbose logging for specific users
+# (see routes section).
+#
+log_debug {{ PG_ODYSSEY_LOG_DEBUG }}
+
+#
+# Log configuration.
+#
+# Write configuration to the log during start and config reload.
+#
+log_config {{ PG_ODYSSEY_LOG_SHOW_CONFIG }}
+
+#
+# Log session events.
+#
+# Write client connect and disconnect events to the log.
+#
+log_session {{ PG_ODYSSEY_LOG_SESSION }}
+
+#
+# Log client queries.
+#
+# Write client queries text to the log. Disabled by default.
+#
+log_query {{ PG_ODYSSEY_LOG_QUERY }}
+
+#
+# Log client statistics.
+#
+# Periodically display information about active routes.
+#
+log_stats {{ PG_ODYSSEY_LOG_STATS }}
+
+#
+# Statistics update inverval.
+#
+# Set interval in seconds for internal statistics update and log report.
+#
+stats_interval {{ PG_ODYSSEY_LOG_INTERVAL }}
+
+###
+### PERFORMANCE
+###
+
+#
+# Worker threads.
+#
+# Set size of thread pool used for client processing.
+#
+#  1: By default, Odyssey runs with a single worker. This is a special
+#  mode optimized for general use. This mode also made to reduce multi-thread
+#  communication overhead.
+#
+#  N: Add additional worker threads, if your server experience heavy load,
+#  especially using TLS setup.
+#
+workers {{ PG_ODYSSEY_WORKERS }}
+
+#
+# Resolver threads.
+#
+# Number of threads used for DNS resolving. This value can be increased, if
+# your server experience a big number of connecting clients.
+#
+resolvers {{ PG_ODYSSEY_RESOLVERS }}
+
+#
+# IO Readahead.
+#
+# Set size of per-connection buffer used for io readahead operations.
+#
+readahead {{ PG_ODYSSEY_READAHEAD }}
+
+#
+# Coroutine cache size.
+#
+# Set pool size of free coroutines cache. It is a good idea to set
+# this value to a sum of max clients plus server connections. Please note, that
+# each coroutine consumes around `coroutine_stack_size` of memory.
+#
+# Set to zero, to disable coroutine cache.
+#
+cache_coroutine {{ PG_ODYSSEY_CACHE_COROUTINE }}
+
+#
+# Coroutine stack size.
+#
+# Set coroutine stack size in pages. In some rare cases
+# it might be necessary to make stack size bigger. Actual stack will be
+# allocated as (`coroutine_stack_size` + 1_guard_page) * page_size.
+# Guard page is used to track stack overflows.
+#
+# 16KB by default.
+#
+coroutine_stack_size 8
+
+#
+# TCP nodelay.
+#
+# Set to 'yes', to enable nodelay.
+#
+nodelay {{ PG_ODYSSEY_NODELAY }}
+
+#
+# TCP keepalive time.
+#
+# Set to zero, to disable keepalive.
+#
+keepalive {{ PG_ODYSSEY_KEEPALIVE }}
+
+###
+### GLOBAL LIMITS
+###
+
+#
+# Global limit of client connections.
+#
+# Comment 'client_max' to disable the limit. On client limit reach, Odyssey will
+# reply with 'too many connections'.
+#
+client_max {{ PG_ODYSSEY_CLIENT_MAX }}
+
+#
+# Global limit of client connections concurrently being routed.
+# Client connection is being routed after it is accepted and until it's startup
+# message is read and connection is assigned route to the database. Most of the
+# routing time is occupied with TLS handshake.
+#
+# Unset or zero 'client_max_routing' will set it's value equal to 16 * workers
+#
+client_max_routing {{ PG_ODYSSEY_CLIENT_MAX_ROUTING }}
+
+###
+### LISTEN
+###
+
+#
+# Listen section defines listening servers used for accepting
+# incoming client connections.
+#
+# It is possible to define several Listen sections. Odyssey will listen on
+# every specified address port and can use separate TLS settings.
+#
+# Odyssey will fail in case it could not bind on any resolved address.
+#
+
+listen {
+#
+#       Bind address.
+#
+#       If host is not set, Odyssey will try to listen using UNIX socket if
+#       unix_socket_dir is set.
+#
+        host "{{ PG_ODYSSEY_HOST }}"
+#
+#       Listen port.
+        port {{ PG_ODYSSEY_PORT }}
+#
+#       TCP listen backlog.
+        backlog {{ PG_ODYSSEY_BACKLOG }}
+#
+#       TLS support.
+#
+#       Supported TLS modes:
+#
+#       "disable"     - disable TLS protocol
+#       "allow"       - switch to TLS protocol on request
+#       "require"     - TLS clients only
+#       "verify_ca"   - require valid client certificate
+#       "verify_full" - require valid client ceritifcate
+#
+#       tls "disable"
+#       tls_ca_file ""
+#       tls_key_file ""
+#       tls_cert_file ""
+#       tls_protocols ""
+
+#   client_login_timeout
+#   Prevent client stall during routing for more that client_login_timeout milliseconds.
+#   Defaults to 15000.
+
+#   server_login_retry
+#   If server responds with "Too many clients" client will wait for server_login_retry milliseconds.
+#   Defaults to 1.
+}
+
+###
+### ROUTING
+###
+
+#
+# Odyssey allows to define client routing rules by specifying
+# 'database', 'user' and 'storage' sections.
+#
+# On client accept appropriate route is assigned by matching 'database' and
+# 'user' sections, all requests then forwarded to a 'storage'
+# (which is referenced from the 'user' section).
+#
+# Database <name> | default.
+#
+# Defines database name requested by client. Each 'database' section structure
+# consist of a 'user' subsections.
+#
+# A special 'database default' is used, in case when no database is matched.
+#
+# User <name> | default.
+#
+# Defines authentication, pooling and storage settings for
+# requested route.
+#
+# A special 'user default' is used, in case when no user is matched.
+#
+# Storage <name>.
+#
+# Defines server used as a data storage or admin console operations.
+#
+
+storage "{{ PG_ODYSSEY_STORAGE_NAME }}" {
+        type "{{ PG_ODYSSEY_TYPE_STORAGE }}"
+        host "{{ PG_ODYSSEY_HOST_ADDR_STORAGE }}"
+        port {{ PG_ODYSSEY_PORT_STORAGE }}
+}
+
+database default {
+    user default {
+        authentication "none"
+        storage "postgres_server"
+        pool "transaction"
+        pool_size 0
+        pool_timeout 0
+        pool_ttl 60
+        pool_discard no
+        pool_cancel yes
+        pool_rollback yes
+        client_fwd_error yes
+        application_name_add_host yes
+        server_lifetime 3600
+        log_debug no
+        quantiles "0.99,0.95,0.5"
+    }
+}
+
+# Раздел для настройки административной консоли для просмотра статистики.
+# psql -h 127.0.0.1 -p 6432 -d console
+storage "local" {
+        type "local"
+}
+database "console" {
+        user default {
+                authentication "none"
+                pool "session"
+                storage "local"
+        }
+}

@@ -1,0 +1,6 @@
+- name: Install Postgres
+  hosts: all
+  become: yes
+
+  roles:
+   - pg_single_install

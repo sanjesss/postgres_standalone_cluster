@@ -1,0 +1,35 @@
+---
+- name: Ensure SELinux is set to enforcing mode
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: SELINUX=disabled
+
+- name: Disabled SElinux
+  shell: setenforce 0
+
+- name: Enable PostgreSQL port in firewalld
+  firewalld:
+    permanent: yes
+    port: "{{ PG_PORT }}/tcp"
+    state: enabled
+
+- name: Enable postgres_exporter port in firewalld
+  firewalld:
+    permanent: yes
+    port: 9187/tcp
+    state: enabled
+  when: INSTALL_PG_EXP == "yes"
+
+- name: Enable Odyssey port in firewalld
+  firewalld:
+    permanent: yes
+    port: "{{ PG_ODYSSEY_PORT }}/tcp"
+    state: enabled
+  when: INSTALL_PG_ODYSSEY == "yes"
+
+- name: install langpack for RedHat-based 8.*
+  dnf:
+    name: "glibc-langpack-ru"
+    state: present
+  when: ansible_pkg_mgr == "dnf"

@@ -1,0 +1,57 @@
+---
+- name: install pg_probackup rpm's with YUM
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ PG_PROBACK_RPM_URL }}"
+    - "{{ PG_PROBACK_DEBUG_RPM_URL }}"
+  when: ansible_pkg_mgr == "yum"
+
+- name: install pg_probackup rpm's with DNF
+  dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ PG_PROBACK_RPM_URL }}"
+    - "{{ PG_PROBACK_DEBUG_RPM_URL }}"
+  when: ansible_pkg_mgr == "dnf"
+
+- name: Create dir for PostgreSQL
+  file:
+    path: /data/backup/
+    owner: postgres
+    group: postgres
+    state: directory
+    mode: '0770'
+
+- name: Backup dir initialization
+  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} init -B /data/backup/
+  become: true
+  become_user: postgres
+
+- name: Init cluster
+  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} add-instance -B /data/backup/ -D /data/pgsql/ --instance "{{ ansible_hostname }}"
+  become: true
+  become_user: postgres
+
+- name: Set config for PG
+  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} set-config -B /data/backup/ --instance "{{ ansible_hostname }}" --wal-depth="{{ PG_PRO_WAL_DEPTH }}" --retention-redundancy="{{ PG_PRO_REDUNDANCY }}" --archive-timeout="{{ PG_PRO_ARCHIVE_TIMEOUT }}" --retention-window="{{ PG_PRO_WINDOW }}"
+  become: true
+  become_user: postgres
+
+- name: CronJob for FULL backup
+  cron:
+    user: postgres
+    weekday: 1,4
+    hour: "2"
+    minute: "0"
+    job: pg_probackup-{{ PG_VERSION_NUMBER }} backup -B /data/backup/ --instance="{{ ansible_hostname }}" -b FULL --stream --compress-algorithm="{{ PG_PRO_COMPRESS_METHOD }}" --compress-level="{{ PG_PRO_COMPRESS_LEVEL }}"
+
+- name: CronJob for DELTA backup
+  cron:
+    user: postgres
+    weekday: 2,3,5,6,0
+    hour: "2"
+    minute: "0"
+    job: pg_probackup-{{ PG_VERSION_NUMBER }} backup -B /data/backup/ --instance="{{ ansible_hostname }}" -b DELTA --stream --compress-algorithm="{{ PG_PRO_COMPRESS_METHOD }}" --compress-level="{{ PG_PRO_COMPRESS_LEVEL }}"

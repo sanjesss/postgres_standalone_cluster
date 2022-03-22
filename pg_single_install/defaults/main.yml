@@ -1,0 +1,200 @@
+---
+############ Общие параметры ############
+
+# Переменные для настройки компонентов установки.
+# По умолчанию устанавливается всё, чтобы что-то отключить - измени значение.
+# yes или no.
+PREPARE_SYSTEM: yes
+INSTALL_PG: yes
+INSTALL_TELEGRAF: yes
+INSTALL_PG_EXP: yes
+INSTALL_PG_PROBACK: yes
+INSTALL_PG_ODYSSEY: yes
+INSTALL_PG_FILEBEAT: yes
+INSTALL_PG_AS_MASTER: no
+INSTALL_PG_AS_REPLICA: no
+
+# Перезагрузка после установки - yes или no.
+# По умолчанию отключена.
+REBOOT_MACHINE: "no"
+
+############ Адреса пакетов ############
+# Адрес банковского репозитория PostgreSQL:
+# http://binary.alfabank.ru/artifactory/postgresql/repos/yum/
+#
+PG_LIBS_URL: "http://binary.alfabank.ru/artifactory/postgresql/repos/yum/13/redhat/rhel-8.5-x86_64/postgresql13-libs-13.4-1PGDG.rhel8.x86_64.rpm"
+PG_CLIENT_URL: "http://binary.alfabank.ru/artifactory/postgresql/repos/yum/13/redhat/rhel-8.5-x86_64/postgresql13-13.4-1PGDG.rhel8.x86_64.rpm"
+PG_SERVER_URL: "http://binary.alfabank.ru/artifactory/postgresql/repos/yum/13/redhat/rhel-8.5-x86_64/postgresql13-server-13.4-1PGDG.rhel8.x86_64.rpm"
+PG_CONTRIB_URL: "http://binary.alfabank.ru/artifactory/postgresql/repos/yum/13/redhat/rhel-8.5-x86_64/postgresql13-contrib-13.4-1PGDG.rhel8.x86_64.rpm"
+
+# Адрес репозитория прикладного ПО:
+# https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/
+#
+TELEGRAF_RPM_URL: "https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/telegraf/rpm/telegraf-1.21.0-1.x86_64.rpm"
+FILEBEAT_RPM_URL: "https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/filebeat/rpm/filebeat-7.16.1-x86_64.rpm"
+PG_PROBACK_RPM_URL: "https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/pg_probackup/2.5.2/OEL8/rpm/pg_probackup-13-2.5.2-1.d57b5fd6edc9929f4a35379b0aabef16eeebed52.x86_64.rpm"
+PG_PROBACK_DEBUG_RPM_URL: "https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/pg_probackup/2.5.2/OEL8/rpm/pg_probackup-13-debuginfo-2.5.2-1.d57b5fd6edc9929f4a35379b0aabef16eeebed52.x86_64.rpm"
+
+# Адрес репозитория архивов:
+# https://binary.alfabank.ru/artifactory/generic-postgresql-materials/
+#
+PGEXP_ARCH_URL: "https://binary.alfabank.ru/artifactory/generic-postgresql-materials/postgres_exporter/bin/postgres_exporter-0.10.0.linux-amd64.tar"
+PG_ODYSSEY_BIN_URL: "https://binary.alfabank.ru/artifactory/generic-postgresql-materials/odyssey/bin/1.1/odyssey.linux-amd64.1.0.tar.gz"
+
+
+############ Параметры PostgreSQL ############
+
+# Мажорная версия PostgreSQL
+PG_VERSION_NUMBER: "13"
+
+# Пароль для пользователя postgres
+PG_POSTGRES_PASS: 12345678
+
+# Некоторые параметры для конструктора конфигурационного файла.
+# Здесь указаны значения по умолчанию при дефолтной установке PG.
+PG_MAX_CONNECTIONS: "50"
+PG_SHARED_BUFFERS: "4GB"
+PG_EFFECTIVE_CHACHE_SIZE: "12GB"
+PG_MAINTENANCE_WORK_MEM: "2GB"
+PG_CHECHPOINT_COMPLETION_TARGET: "0.9"
+PG_WAL_BUFFERS: "16MB"
+PG_DEFAULT_STATISTIC_TARGET: "500"
+PG_RANDOM_PAGE_COSTS: "4.0"
+PG_EFFECTIVE_IO_CONCURRENCY: "2"
+PG_WORK_MEM: "21MB"
+PG_MIN_WAL_SIZE: "4GB"
+PG_MAX_WAL_SIZE: "16GB"
+PG_MAX_WORKER_PROCESSES: "4"
+PG_MAX_PARALLEL_WORKERS_PER_GATHER: "2"
+PG_MAX_PARALLEL_WORKERS: "4"
+PG_MAX_PARALLEL_MAINTENANCE_WORKERS: "2"
+# Значения не по умолчанию:
+PG_ARCHIVE_COMMAND: "'/bin/pg_probackup-{{ PG_VERSION_NUMBER }} archive-push -B /data/backup --instance {{ ansible_hostname }} --wal-file-name=%f --compress-algorithm=zlib --compress-level=9'"
+PG_ARCHVIE_MODE: "always"
+PG_ARCHIVE_TIMEOUT: "60"
+PG_FULL_PAGE_WRITERS: "on"
+PG_LISTEN_ADRESSES: "'*'"
+PG_PORT: "5432"
+PG_LOGGING_COLLECTOR: "on"
+PG_LOG_DIRECTORY: "'/data/log/'"
+PG_LOG_FILENAME: "'postgresql-%Y-%m-%d_%H%M%S.log'"
+PG_LOG_ROTATION_AGE: "6h"
+PG_LOG_LINE_PREFIX: "'% m [% p]% q% u @% d'"
+PG_PASSWORD_ENCRYPTION: "scram-sha-256"
+
+# Параметры для репликации, используются если INSTALL_PG_AS_MASTER и INSTALL_PG_AS_REPLICA в значении "yes".
+PG_REPL_USERNAME: "replicator"
+PG_REPL_PASSWORD: "strong_password"
+PG_REPL_SLOT_NAME: "standby_slot"
+PG_REPL_MASTER_ADDR: "10.10.10.10"
+
+
+############ Параметры Telegraf ############
+
+# Нужно мониторить докер контейнеры?
+# on или off, по умолчанию off
+TELEGRAF_DOCKER: "off"
+# Адрес сервера InfluxDB. По умолчанию тестовый.
+# test или prom
+TELEGRAF_SRV: "prom"
+
+############ Параметры pg_probackup ############
+
+# Параметры бекапирования.
+# Таймаут ожидания архива в секундах:
+PG_PRO_ARCHIVE_TIMEOUT: "120"
+# Количество копий, для которых храним ВАЛ:
+PG_PRO_WAL_DEPTH: "1"
+# Самый ранний момент времени (дней, от текущего), для которого хранятся бекапы:
+PG_PRO_WINDOW: "7"
+# Количество полных копий, который должны сохраняться в каталоге копий:
+PG_PRO_REDUNDANCY: "3"
+# Способ компрессии:
+PG_PRO_COMPRESS_METHOD: "zlib"
+# Уровень сжатия (1-9):
+PG_PRO_COMPRESS_LEVEL: "9"
+
+############ Параметры Yandex.Odyssey ############
+
+# Изменяемые параметры глобальные параметры приложения.
+# Демонизация приложения:
+PG_ODYSSEY_DEMON: "yes"
+# Приоритет рродительского и потоковых процессов:
+PG_ODYSSEY_PRIORITY: "0"
+# Включение связи через сокеты, указать директорию:
+PG_ODYSSEY_SOCKET_DIR: "/tmp"
+# Файловый режим для сокета:
+PG_ODYSSEY_SOCKET_MODE: "0644"
+# Формат файла логов:
+PG_ODYSSEY_LOG_MODE: "%p %t %l [%i %s] (%c) %m"
+# Местонахождение лог файла:
+PG_ODYSSEY_LOG_DIR: "/data/odyssey/odyssey.log"
+# Отображение лога в stdout:
+PG_ODYSSEY_LOG_STDOUT: "yes"
+# Разрешить использование syslog:
+PG_ODYSSEY_SYSLOG: "no"
+# Имя идентификатора для системного журнала:
+PG_ODYSSEY_SYSLOG_IDENT: "odyssey"
+# Имя объекта для системного журнала:
+PG_ODYSSEY_FACILITY: "daemon"
+# Debug режим логгирования:
+PG_ODYSSEY_LOG_DEBUG: "no"
+# Отображение конфигурации во время логгирования:
+PG_ODYSSEY_LOG_SHOW_CONFIG: "yes"
+# Записывать в лог подключение и отключение клиентов:
+PG_ODYSSEY_LOG_SESSION: "yes"
+# Записывать текст клиентских запросов:
+PG_ODYSSEY_LOG_QUERY: "no"
+# Отображать информацию об активных маршрутах:
+PG_ODYSSEY_LOG_STATS: "yes"
+# Интервал в секундах для обновления внутренней статистики и лога:
+PG_ODYSSEY_LOG_INTERVAL: "60"
+# Размер пулка потоков (количество воркеров) для обработки клиентов:
+PG_ODYSSEY_WORKERS: "1"
+# Количество потоков для разрешения DNS:
+PG_ODYSSEY_RESOLVERS: "1"
+# Размер буфера для каждого соединения, используемого для операции чтения с опережением io:
+PG_ODYSSEY_READAHEAD: "8192"
+# Размер пула свободного кэша программ (максимальное количество клиентов), каждая программа потребляет 16кб:
+PG_ODYSSEY_CACHE_COROUTINE: "0"
+# Включить режим nodelay для TCP:
+PG_ODYSSEY_NODELAY: "yes"
+# Время поддержки активности TCP:
+PG_ODYSSEY_KEEPALIVE: "7200"
+# Максимальное количество клиентских подключений:
+PG_ODYSSEY_CLIENT_MAX: "100"
+# Максимальное количество одновременно устанавливаемых TLS:
+PG_ODYSSEY_CLIENT_MAX_ROUTING: "32"
+
+# Раздел Listen опеределяет параметры, которые используются для приема
+# входящих клиентских подключений. Можно определить несколько разделов.
+# Адрес хоста. Если указать *, то будет использоваться unix socket:
+PG_ODYSSEY_HOST: "*"
+# Номер порта:
+PG_ODYSSEY_PORT: "6432"
+# Целое число невыполненных работ:
+PG_ODYSSEY_BACKLOG: "128"
+
+# Правила маршрутизации. Odyssey позволяет определить клиентские правила
+# маршрутизации. (куда направлять соединения после пулера)
+# Имя storage:
+PG_ODYSSEY_STORAGE_NAME: "postgres_server"
+# Тип storage (remote - СУБД на этом же сервере):
+PG_ODYSSEY_TYPE_STORAGE: "remote"
+# Адрес хоста:
+PG_ODYSSEY_HOST_ADDR_STORAGE: "localhost"
+# Номер порта:
+PG_ODYSSEY_PORT_STORAGE: "5432"
+
+# Настройка конкретных баз для соединений производится вручную.
+
+############ Параметры Filebeat ############
+
+# Директория логов PostgreSQL:
+FILEBEAT_PG_LOG_DIR: "/data/log/*.log"
+# Название инстанса в ELK:
+FILEBEAT_INSTANCE_NAME: "{{ ansible_hostname }}-PostgreSQL_cluster"
+# Адрес сервера Logstash. По умолчанию тестовый.
+# 172.19.3.105:5005 - тест
+# :5005 - бой
+FILEBEAT_LOGSTASH_SRV: "172.19.3.105:5005"

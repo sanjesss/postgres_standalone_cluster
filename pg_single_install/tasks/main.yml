@@ -1,0 +1,62 @@
+---
+- name: Prepare hosts
+  import_tasks: prepare.yml
+  when: PREPARE_SYSTEM | bool
+  tags:
+    - prepare
+
+- name: Install PostgreSQL
+  import_tasks: install_postgres.yml
+  when: INSTALL_PG | bool
+  tags:
+    - install postgres
+
+- name: Install PostgreSQL as Master server
+  import_tasks: install_postgres_as_master.yml
+  when: INSTALL_PG_AS_MASTER | bool
+  tags:
+    - install postgres
+    - master
+
+- name: Install PostgreSQL as Replica server
+  import_tasks: install_postgres_as_replica.yml
+  when: INSTALL_PG_AS_REPLICA | bool
+  tags:
+    - install postgres
+    - replica
+
+- name: Install postgres_exporter for Prometheus
+  import_tasks: install_postgres_exporter.yml
+  when: INSTALL_PG_EXP | bool
+  tags:
+    - install postgres_exporter
+
+- name: Install pg_probackup
+  import_tasks: install_pg_probackup.yml
+  when: INSTALL_PG_PROBACK | bool
+  tags:
+    - install pg_probackup
+
+- name: Install Odyssey pooler
+  import_tasks: install_odyssey.yml
+  when: INSTALL_PG_ODYSSEY | bool
+  tags:
+    - install Odyssey
+
+- name: Install Telegraf agent
+  import_tasks: install_telegraf.yml
+  when: INSTALL_TELEGRAF | bool
+  tags:
+    - install telegraf
+
+- name: Install Filebeat agent
+  import_tasks: install_filebeat.yml
+  when: INSTALL_PG_FILEBEAT | bool
+  tags:
+    - install filebeat
+
+- name: Reboot hosts
+  import_tasks: reboot.yml
+  when: REBOOT_MACHINE | bool
+  tags:
+    - reboot

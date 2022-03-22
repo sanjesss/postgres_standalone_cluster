@@ -1,0 +1,158 @@
+- name: install Postgres rpm's with YUM
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ PG_LIBS_URL }}"
+    - "{{ PG_CLIENT_URL }}"
+    - "{{ PG_SERVER_URL }}"
+    - "{{ PG_CONTRIB_URL }}"
+  when: ansible_pkg_mgr == "yum"
+
+- name: install Postgres rpm's with DNF
+  dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "{{ PG_LIBS_URL }}"
+    - "{{ PG_CLIENT_URL }}"
+    - "{{ PG_SERVER_URL }}"
+    - "{{ PG_CONTRIB_URL }}"
+  when: ansible_pkg_mgr == "dnf"
+
+- name: Create dir for PostgreSQL
+  file:
+   path: "{{ item }}"
+   owner: postgres
+   group: postgres
+   state: directory
+   mode: '0770'
+  loop:
+    - /data/
+    - /data/pgsql/
+    - /data/archive/
+    - /data/logs/
+
+- name: Chown PostgreSQL directory
+  file:
+     path: "{{ item }}"
+     owner: postgres
+     group: postgres
+     recurse: yes
+  loop:
+    - /usr/pgsql-{{ PG_VERSION_NUMBER }}
+    - /data/
+
+- name: Confrim destroy cluster
+  pause:
+    prompt: "This command will destroy the cluster if it exists. Are you sure? (yes/no)"
+  register: confirm_delete
+
+- name: Delete files old cluster if exist
+  file:
+    state: absent
+    path: /data/pgsql/
+  when: confirm_delete.user_input | bool
+
+- name: Database initialization
+  command: /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/initdb -k -D /data/pgsql
+  become: true
+  become_user: postgres
+
+- name: Remove old postgresql.conf
+  file:
+    path: /data/pgsql/postgresql.conf
+    state: absent
+
+- name: Construct postgresql.conf
+  template:
+    src: templates/postgresql.j2
+    dest: /data/pgsql/postgresql.conf
+    mode: '0700'
+    owner: postgres
+    group: postgres
+
+- name: Remove old pg_hba.conf
+  file:
+    path: /data/pgsql/pg_hba.conf
+    state: absent
+
+- name: Create and filling new pg_hba.conf
+  lineinfile:
+    dest: /data/pgsql/pg_hba.conf
+    create: yes
+    line: "{{ item  }}"
+    owner: postgres
+    group: postgres
+    mode: '0700'
+  loop:
+    - local all all trust
+    - host all all 127.0.0.1/32 scram-sha-256
+    - host all all ::1/128 scram-sha-256
+    - host all all localhost scram-sha-256
+    - host all all 0.0.0.0/0 scram-sha-256
+    - local replication all trust
+    - host replication all samenet trust
+
+- name: Start pg_cluster
+  command: /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/pg_ctl -D /data/pgsql start
+  become: true
+  become_user: postgres
+    
+- name: Add password for postgres user
+  command: psql -c "ALTER USER postgres PASSWORD '{{ PG_POSTGRES_PASS }}';"
+  become: true
+  become_user: postgres
+
+- name: Create pg_control script file
+  template:
+    src: templates/pg_control.j2
+    dest: /var/lib/pgsql/pg_control.sh
+    owner: postgres
+    group: postgres
+    mode: u+rwx,g+rw,o+r
+
+- name: Create scripts dir for PostgreSQL
+  file:
+   path: /var/lib/pgsql/scripts/
+   owner: postgres
+   group: postgres
+   state: directory
+   mode: '0770'
+
+- name: Copy *.sql files
+  copy:
+    src: files/scripts/show_locks.sql
+    dest: /var/lib/pgsql/scripts/show_locks.sql
+    owner: postgres
+    group: postgres
+    mode: u+rwx,g+rwx,o+r
+
+- name: Create pg_scripts file
+  template:
+    src: templates/scripts_menu.j2
+    dest: /var/lib/pgsql/scripts_menu.sh
+    owner: postgres
+    group: postgres
+    mode: u+rwx,g+rw,o+r
+
+- name: Create environment file for DB Helper
+  template:
+    src: templates/environment_pg.j2
+    dest: /var/lib/pgsql/{{ ansible_hostname }}.env
+    owner: postgres
+    group: postgres
+    mode: u+rwx,g+rw,o+r
+
+- name: Copy DB helper
+  copy:
+    src: files/dbhelper_pg.sh
+    dest: /var/lib/pgsql/dbhelper_pg.sh
+    owner: postgres
+    group: postgres
+    mode: u+rwx,g+rwx,o+r
+
+- name: Adding DB Helper to bash autoload
+  lineinfile:
+    dest: /var/lib/pgsql/.bash_profile
+    line: sh /var/lib/pgsql/dbhelper_pg.sh

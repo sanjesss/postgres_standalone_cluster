@@ -1,0 +1,45 @@
+---
+- name: install Telegraf rpm with YUM
+  yum:
+    name: "{{ TELEGRAF_RPM_URL }}"
+    state: present
+  when: ansible_pkg_mgr == "yum"
+
+- name: install Telegarf rpm with DNF
+  dnf:
+    name: "{{ TELEGRAF_RPM_URL }}"
+    state: present
+  when: ansible_pkg_mgr == "dnf"
+
+- name: Preparing the configuration file without Docker
+  shell: telegraf --input-filter cpu:mem:disk:diskio:net:swap:processes --output-filter influxdb config > telegraf.conf
+  when: TELEGRAF_DOCKER == "off"
+  args:
+    chdir: /etc/telegraf/
+
+- name: Preparing the configuration file with Docker
+  shell: telegraf --input-filter cpu:mem:disk:diskio:net:swap:docker:processes --output-filter influxdb config > telegraf.conf
+  when: TELEGRAF_DOCKER == "on"
+  args:
+    chdir: /etc/telegraf/
+
+- name: Enter test server InfluxDB address
+  lineinfile:
+    dest: /etc/telegraf/telegraf.conf
+    insertafter: 'outputs.influxdb'
+    line: urls = ["http://172.19.3.241:80"]
+  when: TELEGRAF_SRV == "test"
+
+- name: Enter prod server InfluxDB address
+  lineinfile:
+    path: /etc/telegraf/telegraf.conf
+    insertafter: 'outputs.influxdb'
+    line: urls = ["http://172.19.2.100:80"]    
+  when: TELEGRAF_SRV == "prom"
+
+- name: Make sure a service unit telegraf is running
+  systemd:
+    state: restarted
+    name: telegraf
+    enabled: yes
+    daemon_reload: yes

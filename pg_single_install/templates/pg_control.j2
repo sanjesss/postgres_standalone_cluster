@@ -1,0 +1,61 @@
+#!/bin/bash 
+ 
+echo -en "This script is needed to manage a PostgreSQL cluster. Launch it?\n(yes/no)\n" 
+read ANSWER 
+ 
+case $ANSWER in 
+ 
+        yes) 
+        {% if INSTALL_PG_ODYSSEY == true %} 
+        echo -en "What'll we do?\n1. Restart PostgreSQL\n2. Stop PostgreSQL\n3. Start PostgreSQL\n4. Reload PostgreSQL\n5. Start Odyssey\n6. Stop Odyssey\nEnter number:" 
+        {% else %}
+        echo -en "What'll we do?\n1. Restart PostgreSQL\n2. Stop PostgreSQL\n3. Start PostgreSQL\n4. Reload PostgreSQL\nEnter number:" 
+        {% endif %}
+        read NUM 
+ 
+        case $NUM in 
+ 
+                1) 
+                echo -n "Restart PostgreSQL..." 
+                /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/pg_ctl -D /data/pgsql restart 
+                ;; 
+ 
+                2) 
+                echo -n "Stop PostgreSQL..." 
+                /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/pg_ctl -D /data/pgsql stop 
+                ;; 
+ 
+                3) 
+                echo -n "Start PostgreSQL..." 
+                /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/pg_ctl -D /data/pgsql start 
+                ;; 
+ 
+                4) 
+                echo -ne "Reload PostgreSQL...\n" 
+                /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/pg_ctl -D /data/pgsql reload 
+                ;; 
+                {% if INSTALL_PG_ODYSSEY == true %}
+                5) 
+                echo -ne "Start Odyssey...\n" 
+                /data/odyssey/odyssey /data/odyssey/odyssey.conf
+                ;; 
+
+                6) 
+                echo -ne "Stop Odyssey...\n" 
+                O_PS=$(ps -ef | grep "/data/odyssey/odyssey /data/odyssey/odyssey.conf" | grep -v grep | awk '{print $2}') && kill -15 $O_PS;sleep 2;kill -9 $O_PS 2>/dev/null
+                ;; 
+                {% endif %}
+                *) 
+                echo -n "Wrong number" 
+                ;; 
+        esac 
+        ;; 
+ 
+        no) 
+        echo -ne "Script stopped\n" 
+        ;; 
+ 
+        *) 
+        echo -ne "Wrong answer\n" 
+        ;; 
+esac

@@ -1,0 +1,31 @@
+---
+- name: Extract archive
+  unarchive:
+    src: "{{ ODYSSEY_ARCH }}"
+    dest: /data/odyssey
+    remote_src: yes
+    mode: 0776
+    owner: postgres
+    group: postgres
+    
+- name: Create dir for PostgreSQL
+  file:
+    path: /data/odyssey/
+    owner: postgres
+    group: postgres
+    state: directory
+    mode: '0770'
+
+- name: Generate Odyssey config file
+  template:
+    src: templates/odyssey.j2
+    dest: /data/odyssey/odyssey.conf
+    mode: '0760'
+    owner: postgres
+    group: postgres
+    newline_sequence: '\n'
+
+- name: Start odyssey
+  command: /data/odyssey/odyssey /data/odyssey/odyssey.conf
+  become: true
+  become_user: postgres
