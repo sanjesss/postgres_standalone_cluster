@@ -16,7 +16,7 @@ INSTALL_PG_AS_REPLICA: no
 
 # Перезагрузка после установки - yes или no.
 # По умолчанию отключена.
-REBOOT_MACHINE: "no"
+REBOOT_MACHINE: no
 
 ############ Адреса пакетов ############
 # Адрес банковского репозитория PostgreSQL:
@@ -81,6 +81,8 @@ PG_LOG_FILENAME: "'postgresql-%Y-%m-%d_%H%M%S.log'"
 PG_LOG_ROTATION_AGE: "6h"
 PG_LOG_LINE_PREFIX: "'% m [% p]% q% u @% d'"
 PG_PASSWORD_ENCRYPTION: "scram-sha-256"
+PG_SHARED_PRELOAD_LIB: pg_stat_statements
+PG_TRACK_IO_TIMING: "on"
 
 # Параметры для репликации, используются если INSTALL_PG_AS_MASTER и INSTALL_PG_AS_REPLICA в значении "yes".
 PG_REPL_USERNAME: "replicator"

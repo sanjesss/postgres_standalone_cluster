@@ -19,24 +19,24 @@
 
 - name: Create dir for PostgreSQL
   file:
-    path: /data/backup/
+    path: /backup/
     owner: postgres
     group: postgres
     state: directory
     mode: '0770'
 
 - name: Backup dir initialization
-  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} init -B /data/backup/
+  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} init -B /backup/
   become: true
   become_user: postgres
 
 - name: Init cluster
-  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} add-instance -B /data/backup/ -D /data/pgsql/ --instance "{{ ansible_hostname }}"
+  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} add-instance -B /backup/ -D /data/pgsql/ --instance "{{ ansible_hostname }}"
   become: true
   become_user: postgres
 
 - name: Set config for PG
-  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} set-config -B /data/backup/ --instance "{{ ansible_hostname }}" --wal-depth="{{ PG_PRO_WAL_DEPTH }}" --retention-redundancy="{{ PG_PRO_REDUNDANCY }}" --archive-timeout="{{ PG_PRO_ARCHIVE_TIMEOUT }}" --retention-window="{{ PG_PRO_WINDOW }}"
+  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} set-config -B /backup/ --instance "{{ ansible_hostname }}" --wal-depth="{{ PG_PRO_WAL_DEPTH }}" --retention-redundancy="{{ PG_PRO_REDUNDANCY }}" --archive-timeout="{{ PG_PRO_ARCHIVE_TIMEOUT }}" --retention-window="{{ PG_PRO_WINDOW }}"
   become: true
   become_user: postgres
 
@@ -46,7 +46,7 @@
     weekday: 1,4
     hour: "2"
     minute: "0"
-    job: pg_probackup-{{ PG_VERSION_NUMBER }} backup -B /data/backup/ --instance="{{ ansible_hostname }}" -b FULL --stream --compress-algorithm="{{ PG_PRO_COMPRESS_METHOD }}" --compress-level="{{ PG_PRO_COMPRESS_LEVEL }}"
+    job: pg_probackup-{{ PG_VERSION_NUMBER }} backup -B /backup/ --instance="{{ ansible_hostname }}" -b FULL --stream --compress-algorithm="{{ PG_PRO_COMPRESS_METHOD }}" --compress-level="{{ PG_PRO_COMPRESS_LEVEL }}"
 
 - name: CronJob for DELTA backup
   cron:
@@ -54,4 +54,19 @@
     weekday: 2,3,5,6,0
     hour: "2"
     minute: "0"
-    job: pg_probackup-{{ PG_VERSION_NUMBER }} backup -B /data/backup/ --instance="{{ ansible_hostname }}" -b DELTA --stream --compress-algorithm="{{ PG_PRO_COMPRESS_METHOD }}" --compress-level="{{ PG_PRO_COMPRESS_LEVEL }}"
+    job: pg_probackup-{{ PG_VERSION_NUMBER }} backup -B /backup/ --instance="{{ ansible_hostname }}" -b DELTA --stream --compress-algorithm="{{ PG_PRO_COMPRESS_METHOD }}" --compress-level="{{ PG_PRO_COMPRESS_LEVEL }}"
+
+- name: CronJob to delete expired copies
+  cron:
+    user: postgres
+    weekday: 1,4
+    hour: "2"
+    minute: "0"
+    job: pg_probackup-{{ PG_VERSION_NUMBER }} delete -B /backup/ --instance="{{ ansible_hostname }}" --delete-expired
+
+- name: CronJob to delete expired WALs
+  cron:
+    user: postgres
+    hour: "2"
+    minute: "0"
+    job: pg_probackup-{{ PG_VERSION_NUMBER }} delete -B /backup/ --instance="{{ ansible_hostname }}" --retention-window=7 --wal-depth=1 --delete-wal

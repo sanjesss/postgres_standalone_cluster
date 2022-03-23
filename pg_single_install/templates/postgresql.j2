@@ -580,7 +580,7 @@ log_timezone = 'Europe/Moscow'
 
 #track_activities = on
 #track_counts = on
-#track_io_timing = off
+track_io_timing = {{ TRACK_IO_TIMING }}
 #track_functions = none                 # none, pl, all
 #track_activity_query_size = 1024       # (change requires restart)
 #stats_temp_directory = 'pg_stat_tmp'
@@ -703,7 +703,7 @@ default_text_search_config = 'pg_catalog.russian'
 
 # - Shared Library Preloading -
 
-shared_preload_libraries = 'pg_stat_statements'  # (change requires restart)
+shared_preload_libraries = '{{ PG_SHARED_PRELOAD_LIB }}'  # (change requires restart)
 #local_preload_libraries = ''
 #session_preload_libraries = ''
 #jit_provider = 'llvmjit'               # JIT library to use
