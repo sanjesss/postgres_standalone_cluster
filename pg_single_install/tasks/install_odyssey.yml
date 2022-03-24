@@ -1,13 +1,16 @@
 ---
-- name: Extract archive
-  unarchive:
-    src: "{{ ODYSSEY_ARCH }}"
-    dest: /data/odyssey
-    remote_src: yes
-    mode: 0776
-    owner: postgres
-    group: postgres
-    
+- name: Install openssl11-libs with YUM
+  yum:
+    name: openssl11-libs
+    state: latest
+  when: ansible_pkg_mgr == "yum"
+
+- name: Install openssl11-libs with DNF
+  dnf:
+    name: openssl11-libs
+    state: latest
+  when: ansible_pkg_mgr == "dnf"
+
 - name: Create dir for PostgreSQL
   file:
     path: /data/odyssey/
@@ -16,6 +19,15 @@
     state: directory
     mode: '0770'
 
+- name: Extract archive
+  unarchive:
+    src: "{{ PG_ODYSSEY_BIN_URL }}"
+    dest: /data/odyssey
+    remote_src: yes
+    mode: 0776
+    owner: postgres
+    group: postgres
+    
 - name: Generate Odyssey config file
   template:
     src: templates/odyssey.j2

@@ -1,1 +1,22 @@
-[all]
+
+# Для установки PostgreSQL, как мастер сервер, поставь около нужного хоста repl_mode=master
+# Для установки PostgreSQL, как реплика сервер, поставь около нужного хоста repl_mode=replica
+# Для установки PostgreSQL в обычном режиме, ничего не ставь
+#
+# host1 repl_mode=master
+# host2 repl_mode=replica
+# host3 
+
+[pg_master]
+burcev1.moscow.alfaintra.net repl_mode=master
+
+[pg_replica]
+burcev2.moscow.alfaintra.net repl_mode=replica
+
+[pg_standalone]
+burcev3.moscow.alfaintra.net
+
+[postgresql:children]
+pg_master
+pg_replica
+pg_standalone

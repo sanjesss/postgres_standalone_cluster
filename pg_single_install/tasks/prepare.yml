@@ -7,6 +7,7 @@
 
 - name: Disabled SElinux
   shell: setenforce 0
+  ignore_errors: yes
 
 - name: Enable PostgreSQL port in firewalld
   firewalld:
@@ -19,14 +20,14 @@
     permanent: yes
     port: 9187/tcp
     state: enabled
-  when: INSTALL_PG_EXP == "yes"
+  when: INSTALL_PG_EXP | bool
 
 - name: Enable Odyssey port in firewalld
   firewalld:
     permanent: yes
     port: "{{ PG_ODYSSEY_PORT }}/tcp"
     state: enabled
-  when: INSTALL_PG_ODYSSEY == "yes"
+  when: INSTALL_PG_ODYSSEY | bool
 
 - name: install langpack for RedHat-based 8.*
   dnf:

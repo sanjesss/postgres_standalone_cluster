@@ -5,14 +5,14 @@
 # По умолчанию устанавливается всё, чтобы что-то отключить - измени значение.
 # yes или no.
 PREPARE_SYSTEM: yes
-INSTALL_PG: yes
+INSTALL_PG: "{{ repl_mode is not defined }}"
 INSTALL_TELEGRAF: yes
 INSTALL_PG_EXP: yes
 INSTALL_PG_PROBACK: yes
 INSTALL_PG_ODYSSEY: yes
 INSTALL_PG_FILEBEAT: yes
-INSTALL_PG_AS_MASTER: no
-INSTALL_PG_AS_REPLICA: no
+INSTALL_PG_AS_MASTER: "{{ repl_mode is defined and repl_mode == 'master' }}"
+INSTALL_PG_AS_REPLICA: "{{ repl_mode is defined and repl_mode == 'replica' }}"
 
 # Перезагрузка после установки - yes или no.
 # По умолчанию отключена.
@@ -20,26 +20,26 @@ REBOOT_MACHINE: no
 
 ############ Адреса пакетов ############
 # Адрес банковского репозитория PostgreSQL:
-# http://binary.alfabank.ru/artifactory/postgresql/repos/yum/
-#
-PG_LIBS_URL: "http://binary.alfabank.ru/artifactory/postgresql/repos/yum/13/redhat/rhel-8.5-x86_64/postgresql13-libs-13.4-1PGDG.rhel8.x86_64.rpm"
-PG_CLIENT_URL: "http://binary.alfabank.ru/artifactory/postgresql/repos/yum/13/redhat/rhel-8.5-x86_64/postgresql13-13.4-1PGDG.rhel8.x86_64.rpm"
-PG_SERVER_URL: "http://binary.alfabank.ru/artifactory/postgresql/repos/yum/13/redhat/rhel-8.5-x86_64/postgresql13-server-13.4-1PGDG.rhel8.x86_64.rpm"
-PG_CONTRIB_URL: "http://binary.alfabank.ru/artifactory/postgresql/repos/yum/13/redhat/rhel-8.5-x86_64/postgresql13-contrib-13.4-1PGDG.rhel8.x86_64.rpm"
+# http://binary.moscow.alfaintra.net/artifactory/postgresql/repos/yum/
+# binary.moscow.alfaintra.net
+PG_LIBS_URL: "http://binary.moscow.alfaintra.net/artifactory/postgresql/repos/yum/13/redhat/rhel-7.9-x86_64/postgresql13-libs-13.5-1PGDG.rhel7.x86_64.rpm"
+PG_CLIENT_URL: "http://binary.moscow.alfaintra.net/artifactory/postgresql/repos/yum/13/redhat/rhel-7.9-x86_64/postgresql13-13.5-1PGDG.rhel7.x86_64.rpm"
+PG_SERVER_URL: "http://binary.moscow.alfaintra.net/artifactory/postgresql/repos/yum/13/redhat/rhel-7.9-x86_64/postgresql13-server-13.5-1PGDG.rhel7.x86_64.rpm"
+PG_CONTRIB_URL: "http://binary.moscow.alfaintra.net/artifactory/postgresql/repos/yum/13/redhat/rhel-7.9-x86_64/postgresql13-contrib-13.5-1PGDG.rhel7.x86_64.rpm"
 
 # Адрес репозитория прикладного ПО:
-# https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/
+# http://binary.moscow.alfaintra.net/artifactory/rpm-postgresql-materials/
 #
-TELEGRAF_RPM_URL: "https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/telegraf/rpm/telegraf-1.21.0-1.x86_64.rpm"
-FILEBEAT_RPM_URL: "https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/filebeat/rpm/filebeat-7.16.1-x86_64.rpm"
-PG_PROBACK_RPM_URL: "https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/pg_probackup/2.5.2/OEL8/rpm/pg_probackup-13-2.5.2-1.d57b5fd6edc9929f4a35379b0aabef16eeebed52.x86_64.rpm"
-PG_PROBACK_DEBUG_RPM_URL: "https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/pg_probackup/2.5.2/OEL8/rpm/pg_probackup-13-debuginfo-2.5.2-1.d57b5fd6edc9929f4a35379b0aabef16eeebed52.x86_64.rpm"
+TELEGRAF_RPM_URL: "http://binary.moscow.alfaintra.net/artifactory/rpm-postgresql-materials/telegraf/rpm/telegraf-1.21.0-1.x86_64.rpm"
+FILEBEAT_RPM_URL: "http://binary.moscow.alfaintra.net/artifactory/rpm-postgresql-materials/filebeat/rpm/filebeat-7.16.1-x86_64.rpm"
+PG_PROBACK_RPM_URL: "http://binary.moscow.alfaintra.net/artifactory/rpm-postgresql-materials/pg_probackup/2.5.2/OEL7/rpm/pg_probackup-13-2.5.2-1.d57b5fd6edc9929f4a35379b0aabef16eeebed52.x86_64.rpm"
+PG_PROBACK_DEBUG_RPM_URL: "http://binary.moscow.alfaintra.net/artifactory/rpm-postgresql-materials/pg_probackup/2.5.2/OEL7/rpm/pg_probackup-13-debuginfo-2.5.2-1.d57b5fd6edc9929f4a35379b0aabef16eeebed52.x86_64.rpm"
 
 # Адрес репозитория архивов:
-# https://binary.alfabank.ru/artifactory/generic-postgresql-materials/
+# http://binary.moscow.alfaintra.net/artifactory/generic-postgresql-materials/
 #
-PGEXP_ARCH_URL: "https://binary.alfabank.ru/artifactory/generic-postgresql-materials/postgres_exporter/bin/postgres_exporter-0.10.0.linux-amd64.tar"
-PG_ODYSSEY_BIN_URL: "https://binary.alfabank.ru/artifactory/generic-postgresql-materials/odyssey/bin/1.1/odyssey.linux-amd64.1.0.tar.gz"
+PGEXP_ARCH_URL: "http://binary.moscow.alfaintra.net/artifactory/generic-postgresql-materials/postgres_exporter/bin/postgres_exporter-0.10.0.linux-amd64.tar"
+PG_ODYSSEY_BIN_URL: "http://binary.moscow.alfaintra.net/artifactory/generic-postgresql-materials/odyssey/bin/1.1/odyssey.linux-amd64.1.0.tar.gz"
 
 
 ############ Параметры PostgreSQL ############
@@ -69,7 +69,7 @@ PG_MAX_PARALLEL_WORKERS_PER_GATHER: "2"
 PG_MAX_PARALLEL_WORKERS: "4"
 PG_MAX_PARALLEL_MAINTENANCE_WORKERS: "2"
 # Значения не по умолчанию:
-PG_ARCHIVE_COMMAND: "'/bin/pg_probackup-{{ PG_VERSION_NUMBER }} archive-push -B /data/backup --instance {{ ansible_hostname }} --wal-file-name=%f --compress-algorithm=zlib --compress-level=9'"
+PG_ARCHIVE_COMMAND: "'/bin/pg_probackup-{{ PG_VERSION_NUMBER }} archive-push -B /backup --instance {{ ansible_hostname }} --wal-file-name=%f --compress-algorithm=zlib --compress-level=9'"
 PG_ARCHVIE_MODE: "always"
 PG_ARCHIVE_TIMEOUT: "60"
 PG_FULL_PAGE_WRITERS: "on"
@@ -79,7 +79,7 @@ PG_LOGGING_COLLECTOR: "on"
 PG_LOG_DIRECTORY: "'/data/log/'"
 PG_LOG_FILENAME: "'postgresql-%Y-%m-%d_%H%M%S.log'"
 PG_LOG_ROTATION_AGE: "6h"
-PG_LOG_LINE_PREFIX: "'% m [% p]% q% u @% d'"
+PG_LOG_LINE_PREFIX: "'%m[%p]%q%u@ %d'"
 PG_PASSWORD_ENCRYPTION: "scram-sha-256"
 PG_SHARED_PRELOAD_LIB: pg_stat_statements
 PG_TRACK_IO_TIMING: "on"
@@ -88,7 +88,7 @@ PG_TRACK_IO_TIMING: "on"
 PG_REPL_USERNAME: "replicator"
 PG_REPL_PASSWORD: "strong_password"
 PG_REPL_SLOT_NAME: "standby_slot"
-PG_REPL_MASTER_ADDR: "10.10.10.10"
+PG_REPL_MASTER_ADDR: "172.28.112.33"
 
 
 ############ Параметры Telegraf ############

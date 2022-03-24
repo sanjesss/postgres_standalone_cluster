@@ -1,27 +1,27 @@
 ---  
-- name: install Postgres rpm's
+- name: install replica Postgres rpm's
   yum:
     name: "{{ item }}"
     state: present
   loop:
     - "{{ PG_LIBS_URL }}"
     - "{{ PG_CLIENT_URL }}"
-    - "{{ PG_SERVER_UR }}"
+    - "{{ PG_SERVER_URL }}"
     - "{{ PG_CONTRIB_URL }}"
   when: ansible_pkg_mgr == "yum"
 
-- name: install Postgres rpm's
+- name: install replica Postgres dnf's
   dnf:
     name: "{{ item }}"
     state: present
   loop:
     - "{{ PG_LIBS_URL }}"
     - "{{ PG_CLIENT_URL }}"
-    - "{{ PG_SERVER_UR }}"
+    - "{{ PG_SERVER_URL }}"
     - "{{ PG_CONTRIB_URL }}"
   when: ansible_pkg_mgr == "dnf"
 
-- name: Create dir for PostgreSQL
+- name: Create dir for replica PostgreSQL
   file:
     path: "{{ item }}"
     owner: postgres
@@ -34,7 +34,7 @@
     - /data/archive/
     - /data/log/
 
-- name: Chown PostgreSQL directory
+- name: Chown replica PostgreSQL directory
   file:
     path: "{{ item }}"
     owner: postgres
@@ -48,6 +48,20 @@
   pause:
     prompt: "This command will destroy the cluster if it exists. Are you sure? (yes/no)"
   register: confirm_delete
+
+- name: Get running processes postmaster
+  shell: "ps -ef | grep -v grep | grep -w \"/usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/postgres\" | awk '{print $2}'"
+  register: running_processes
+
+- name: Kill running processes postmaster
+  shell: "kill {{ item }}"
+  with_items: "{{ running_processes.stdout_lines }}"
+
+- name: Waiting until all running processes postmaster are killed
+  wait_for:
+    path: "/proc/{{ item }}/status"
+    state: absent
+  with_items: "{{ running_processes.stdout_lines }}"
 
 - name: Delete files old cluster if exist
   file:
@@ -69,6 +83,41 @@
   template:
     src: templates/pg_control.j2
     dest: /var/lib/pgsql/pg_control.sh
+    owner: postgres
+    group: postgres
+    mode: u+rwx,g+rw,o+r
+
+- name: Create scripts dir for PostgreSQL
+  file:
+   path: /var/lib/pgsql/scripts/
+   owner: postgres
+   group: postgres
+   state: directory
+   mode: '0770'
+
+- name: Copy *.sql files
+  copy:
+    src: "{{ item }}"
+    dest: /var/lib/pgsql/scripts/
+    owner: postgres
+    group: postgres
+    mode: u+rwx,g+rwx,o+r
+  loop:
+    - files/scripts/db_activity.sql
+    - files/scripts/db_size.sql
+    - files/scripts/query_stat_cpu_time.sql
+    - files/scripts/query_stat_io_time.sql
+    - files/scripts/query_stat_rows.sql
+    - files/scripts/query_stat_time.sql
+    - files/scripts/redundant_indexes.sql
+    - files/scripts/rel_size.sql
+    - files/scripts/show_locks.sql
+    - files/scripts/temp_files_query.sql
+
+- name: Create pg_scripts file
+  template:
+    src: templates/scripts_menu.j2
+    dest: /var/lib/pgsql/scripts_menu.sh
     owner: postgres
     group: postgres
     mode: u+rwx,g+rw,o+r
