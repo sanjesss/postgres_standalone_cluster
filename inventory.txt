@@ -8,13 +8,13 @@
 # host3 
 
 [pg_master]
-burcev1.moscow.alfaintra.net repl_mode=master
+postgres1 repl_mode=master
 
 [pg_replica]
-burcev2.moscow.alfaintra.net repl_mode=replica
+postgres2 repl_mode=replica
 
 [pg_standalone]
-burcev3.moscow.alfaintra.net
+postgres3
 
 [postgresql:children]
 pg_master
