@@ -1,6 +1,6 @@
 ---
 - name: install Postgres rpm's with YUM
-  yum:
+  package:
     name: "{{ item }}"
     state: present
   loop:
@@ -8,18 +8,6 @@
     - "{{ PG_CLIENT_URL }}"
     - "{{ PG_SERVER_URL }}"
     - "{{ PG_CONTRIB_URL }}"
-  when: ansible_pkg_mgr == "yum"
-
-- name: install Postgres rpm's with DNF
-  dnf:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - "{{ PG_LIBS_URL }}"
-    - "{{ PG_CLIENT_URL }}"
-    - "{{ PG_SERVER_URL }}"
-    - "{{ PG_CONTRIB_URL }}"
-  when: ansible_pkg_mgr == "dnf"
 
 - name: Create dir for PostgreSQL
   file:
@@ -48,81 +36,145 @@
   pause:
     prompt: "This command will destroy the cluster if it exists. Are you sure? (yes/no)"
   register: confirm_delete
+  when: flush
 
-- name: Get running processes postmaster
-  shell: "ps -ef | grep -v grep | grep -w \"/usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/postgres\" | awk '{print $2}'"
-  register: running_processes
-
-- name: Kill running processes postmaster
-  shell: "kill {{ item }}"
-  with_items: "{{ running_processes.stdout_lines }}"
-
-- name: Waiting until all running processes postmaster are killed
-  wait_for:
-    path: "/proc/{{ item }}/status"
-    state: absent
-  with_items: "{{ running_processes.stdout_lines }}"
-
-- name: Delete files old cluster if exist
-  file:
-    state: absent
-    path: /data/pgsql/
+- name: Stop postgresql service if exist
+  systemd:
+    name: postgresql
+    state: stopped
   when: confirm_delete.user_input | bool
 
-- name: Database initialization
-  command: /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/initdb -k -D /data/pgsql
-  become: true
-  become_user: postgres
+- name: Delete files old cluster if exist
+  command: rm -rf /data/pgsql/*
+  when: confirm_delete.user_input | bool
+  
+# - name: Get running processes postmaster
+#   shell: "ps -ef | grep -v grep | grep -w \"/usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/postgres\" | awk '{print $2}'"
+#   register: running_processes
 
-- name: Remove old postgresql.conf
-  file:
-    path: /data/pgsql/postgresql.conf
-    state: absent
+# - name: Kill running processes postmaster
+#   shell: "kill {{ item }}"
+#   with_items: "{{ running_processes.stdout_lines }}"
 
-- name: Construct postgresql.conf
-  template:
-    src: templates/postgresql.j2
-    dest: /data/pgsql/postgresql.conf
-    mode: '0700'
-    owner: postgres
-    group: postgres
+# - name: Waiting until all running processes postmaster are killed
+#   wait_for:
+#     path: "/proc/{{ item }}/status"
+#     state: absent
+#   with_items: "{{ running_processes.stdout_lines }}"
 
-- name: Remove old pg_hba.conf
-  file:
-    path: /data/pgsql/pg_hba.conf
-    state: absent
+- block:
 
-- name: Create and filling new pg_hba.conf
-  lineinfile:
-    dest: /data/pgsql/pg_hba.conf
-    create: yes
-    line: "{{ item  }}"
-    owner: postgres
-    group: postgres
-    mode: '0700'
-  loop:
-    - local all all trust
-    - host all all 127.0.0.1/32 scram-sha-256
-    - host all all ::1/128 scram-sha-256
-    - host all all localhost scram-sha-256
-    - host all all 0.0.0.0/0 scram-sha-256
-    - local replication all trust
-    - host replication all samenet trust
+    - name: Database initialization
+      command: /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/initdb -k -D /data/pgsql
+      become: true
+      become_user: postgres
 
-- name: Start pg_cluster
-  shell: sleep 5; /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/pg_ctl -D /data/pgsql start
-  become: true
-  become_user: postgres
-    
-- name: Add password for postgres user
-  command: psql -c "ALTER USER postgres PASSWORD '{{ PG_POSTGRES_PASS }}';"
-  become: true
-  become_user: postgres
+    - name: Remove old postgresql.conf
+      file:
+        path: /data/pgsql/postgresql.conf
+        state: absent
 
-- name: Create extension pg_stat_statements
-  command: psql -c "create extension pg_stat_statements;"
-  become: true
-  become_user: postgres
+    - name: Construct postgresql.conf
+      template:
+        src: templates/postgresql.j2
+        dest: /data/pgsql/postgresql.conf
+        mode: '0700'
+        owner: postgres
+        group: postgres
+
+    - name: Remove old pg_hba.conf
+      file:
+        path: /data/pgsql/pg_hba.conf
+        state: absent
+
+    - name: Create and filling new pg_hba.conf
+      lineinfile:
+        dest: /data/pgsql/pg_hba.conf
+        create: yes
+        line: "{{ item  }}"
+        owner: postgres
+        group: postgres
+        mode: '0700'
+      loop:
+        - local all all trust
+        - host all all 127.0.0.1/32 scram-sha-256
+        - host all all ::1/128 scram-sha-256
+        - host all all localhost scram-sha-256
+        - host all all 0.0.0.0/0 scram-sha-256
+
+    - name: Start pg_cluster
+      command: /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/pg_ctl -D /data/pgsql start
+      become: true
+      become_user: postgres
+
+    # - name: Create user for replication
+    #   command: psql -U postgres -d postgres -p {{ PG_PORT }} -q -c "CREATE USER {{ PG_REPL_USERNAME }} REPLICATION LOGIN PASSWORD '{{ PG_REPL_PASSWORD }}';"
+    #   become: true
+    #   become_user: postgres 
+
+    - name: Create user for replication
+      postgresql_query:
+        db: postgres
+        query: CREATE USER {{ PG_REPL_USERNAME }} REPLICATION LOGIN PASSWORD '{{ PG_REPL_PASSWORD }}'
+
+    # - name: Create replication slot
+    #   command: psql -U postgres -d postgres -p {{ PG_PORT }} -q -c "SELECT pg_create_physical_replication_slot('{{ PG_REPL_SLOT_NAME }}');"
+    #   become: true
+    #   become_user: postgres 
+
+    - name: Create slot for replication
+      postgresql_query:
+        db: postgres
+        query: SELECT pg_create_physical_replication_slot('{{ PG_REPL_SLOT_NAME }}')
+
+    - name: Create and filling new pg_hba.conf
+      lineinfile:
+        dest: /data/pgsql/pg_hba.conf
+        line: "{{ item  }}"
+        owner: postgres
+        group: postgres
+        mode: '0700'
+      loop:
+        - local replication {{ PG_REPL_USERNAME }} trust
+        - host replication {{ PG_REPL_USERNAME }} samenet trust
+
+    # - name: Add password for postgres user
+    #   command: psql -c "ALTER USER postgres PASSWORD '{{ PG_POSTGRES_PASS }}';"
+    #   become: true
+    #   become_user: postgres
+
+    - name: Add password for postgres user
+      postgresql_query:
+        db: postgres
+        query: ALTER USER postgres PASSWORD '{{ PG_POSTGRES_PASS }}'
+
+    # - name: Create extension pg_stat_statements
+    #   command: psql -c "CREATE EXTENSION pg_stat_statements;"
+    #   become: true
+    #   become_user: postgres
+
+    - name: Create extension pg_stat_statements
+      postgresql_query:
+        db: postgres
+        query: CREATE EXTENSION pg_stat_statements;
+
+  when: repl_mode is defined and repl_mode == 'master' or repl_mode is not defined
+
+- block:
+
+    - name: Copy cluster with help pg_basebackup 
+      command: pg_basebackup --pgdata=/data/pgsql/ --format=p --write-recovery-conf --checkpoint=fast --slot={{ PG_REPL_SLOT_NAME }} --host={{ PG_REPL_MASTER_ADDR }} --port={{ PG_PORT }} --username={{ PG_REPL_USERNAME }}
+      become: true
+      become_user: postgres
+
+    - name: Change archive command
+      lineinfile:
+        path: /data/pgsql/postgresql.conf
+        regexp: '^archive_command = '
+        line: archive_command = '/bin/pg_probackup-{{ PG_VERSION_NUMBER }} archive-push -B /backup --instance {{ ansible_hostname }} --wal-file-name=%f --compress-algorithm=zlib --compress-level=9'
+      when: PG_ARCHIVE_COMMAND == "always" or PG_ARCHIVE_COMMAND == "on"
+
+  when: repl_mode is defined and repl_mode == 'replica'
 
 - name: Create pg_control script file
   template:
@@ -146,7 +198,7 @@
     dest: /var/lib/pgsql/scripts/
     owner: postgres
     group: postgres
-    mode: u+rwx,g+rwx,o+r
+    mode: u+rw,g+rw,o+r
   loop:
     - files/scripts/db_activity.sql
     - files/scripts/db_size.sql
@@ -165,7 +217,7 @@
     dest: /var/lib/pgsql/scripts_menu.sh
     owner: postgres
     group: postgres
-    mode: u+rwx,g+rw,o+r
+    mode: u+rwx,g+rwx,o+r
 
 - name: Create environment file for DB Helper
   template:

@@ -1,0 +1,39 @@
+---
+- name: Enable node_exporter port in firewalld
+  firewalld:
+    permanent: yes
+    port: 9100/tcp
+    state: enabled
+
+- name: Create dir for exporters
+  file:
+   path: "{{ item }}"
+   owner: postgres
+   group: postgres
+   state: directory
+   mode: '0770'
+  loop:
+   - /var/lib/pgsql/exporters
+   - /var/lib/pgsql/exporters/node_exporter
+
+- name: Download and extract archive
+  unarchive:
+    src: "{{  }}"
+    dest: /var/lib/pgsql/exporters/node_exporter/
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+    mode: 0776
+
+# проверить директорию, можеть быть правильные права и юзер-локал-бин?
+
+- name: Copy node_exporter service file
+  template:
+    src: templates/node_exporter.j2
+    dest: /etc/systemd/system/node_exporter.service
+
+- name: Make sure a service unit node_exporter is running
+  systemd:
+    state: started
+    name: node_exporter
+    enabled: yes
+    daemon_reload: yes

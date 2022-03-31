@@ -1,17 +1,16 @@
 ---
 - name: Install openssl11-libs with YUM
-  yum:
+  package:
     name: openssl11-libs
     state: latest
-  when: ansible_pkg_mgr == "yum"
 
-- name: Install openssl11-libs with DNF
-  dnf:
-    name: openssl11-libs
-    state: latest
-  when: ansible_pkg_mgr == "dnf"
+- name: Enable Odyssey port in firewalld
+  firewalld:
+    permanent: yes
+    port: "{{ PG_ODYSSEY_PORT }}/tcp"
+    state: enabled
 
-- name: Create dir for PostgreSQL
+- name: Create dir for Odyssey
   file:
     path: /data/odyssey/
     owner: postgres

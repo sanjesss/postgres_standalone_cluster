@@ -11,20 +11,6 @@
   tags:
     - install postgres
 
-- name: Install PostgreSQL as Master server
-  import_tasks: install_postgres_as_master.yml
-  when: INSTALL_PG_AS_MASTER | bool
-  tags:
-    - install postgres
-    - master
-
-- name: Install PostgreSQL as Replica server
-  import_tasks: install_postgres_as_replica.yml
-  when: INSTALL_PG_AS_REPLICA | bool
-  tags:
-    - install postgres
-    - replica
-
 - name: Install postgres_exporter for Prometheus
   import_tasks: install_postgres_exporter.yml
   when: INSTALL_PG_EXP | bool
@@ -43,9 +29,9 @@
   tags:
     - install Odyssey
 
-- name: Install Telegraf agent
-  import_tasks: install_telegraf.yml
-  when: INSTALL_TELEGRAF | bool
+- name: Install node_exporter
+  import_tasks: install_node_exporter.yml
+  when: INSTALL_NODE_EXP | bool
   tags:
     - install telegraf
 
@@ -54,9 +40,3 @@
   when: INSTALL_PG_FILEBEAT | bool
   tags:
     - install filebeat
-
-- name: Reboot hosts
-  import_tasks: reboot.yml
-  when: REBOOT_MACHINE | bool
-  tags:
-    - reboot

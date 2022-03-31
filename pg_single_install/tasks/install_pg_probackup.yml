@@ -1,23 +1,13 @@
 ---
 - name: install pg_probackup rpm's with YUM
-  yum:
+  package:
     name: "{{ item }}"
     state: present
   loop:
     - "{{ PG_PROBACK_RPM_URL }}"
     - "{{ PG_PROBACK_DEBUG_RPM_URL }}"
-  when: ansible_pkg_mgr == "yum"
 
-- name: install pg_probackup rpm's with DNF
-  dnf:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - "{{ PG_PROBACK_RPM_URL }}"
-    - "{{ PG_PROBACK_DEBUG_RPM_URL }}"
-  when: ansible_pkg_mgr == "dnf"
-
-- name: Create dir for PostgreSQL
+- name: Create dir for Backups
   file:
     path: /backup/
     owner: postgres

@@ -7,6 +7,6 @@ Restart=always
 User=postgres
 Group=postgres
 Environment=DATA_SOURCE_NAME=postgresql://postgres:{{ PG_POSTGRES_PASS }}@{{ ansible_hostname }}:{{ PG_PORT }}/postgres?sslmode=disable
-ExecStart=/data/postgres_exporter/postgres_exporter --extend.query-path=/var/lib/pgsql/metrics.yaml
+ExecStart=/var/lib/pgsql/exporters/postgres_exporter/postgres_exporter --extend.query-path=/var/lib/pgsql/metrics.yaml
 [Install]
 WantedBy=multi-user.target

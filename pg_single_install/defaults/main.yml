@@ -3,21 +3,17 @@
 
 # Переменные для настройки компонентов установки.
 # По умолчанию устанавливается всё, чтобы что-то отключить - измени значение.
-# Выбор сервера для установки мастера и реплики происходит путем выставления параметра в файле инвентаря. 
-# Необходимо указать 
-# yes или no.
-PREPARE_SYSTEM: yes
-INSTALL_PG: "{{ repl_mode is not defined }}" # Чтобы отключить полностью, впиши no.
-INSTALL_TELEGRAF: yes
-INSTALL_PG_EXP: yes
-INSTALL_PG_PROBACK: yes
-INSTALL_PG_ODYSSEY: yes
-INSTALL_PG_FILEBEAT: yes
-INSTALL_PG_AS_MASTER: "{{ repl_mode is defined and repl_mode == 'master' }}"
-INSTALL_PG_AS_REPLICA: "{{ repl_mode is defined and repl_mode == 'replica' }}"
+# Выбор сервера для установки мастера и реплики происходит путем выставления лейбла в файле инвентаря. 
 
-# Перезагрузка после установки - yes или no.
-REBOOT_MACHINE: no
+# Удалить существующий кластер БД
+DESTROY_CLUSTER: yes
+
+PREPARE_SYSTEM: no
+INSTALL_NODE_EXP: no
+INSTALL_PG_EXP: no
+INSTALL_PG_PROBACK: no
+INSTALL_PG_ODYSSEY: no
+INSTALL_PG_FILEBEAT: no
 
 ############ Адреса пакетов ############
 # Адрес банковского репозитория PostgreSQL:
@@ -90,16 +86,6 @@ PG_REPL_USERNAME: "replicator"
 PG_REPL_PASSWORD: "strong_password"
 PG_REPL_SLOT_NAME: "standby_slot"
 PG_REPL_MASTER_ADDR: "{% for host in groups['postgresql']%}{% if hostvars[host].repl_mode is defined and hostvars[host].repl_mode == 'master' %}{{ hostvars[host].ansible_default_ipv4.address }}{% endif %}{% endfor %}"
-
-
-############ Параметры Telegraf ############
-
-# Нужно мониторить докер контейнеры?
-# on или off, по умолчанию off
-TELEGRAF_DOCKER: "off"
-# Адрес сервера InfluxDB. По умолчанию тестовый.
-# test или prom
-TELEGRAF_SRV: "prom"
 
 ############ Параметры pg_probackup ############
 

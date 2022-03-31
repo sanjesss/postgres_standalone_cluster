@@ -1,16 +1,25 @@
 ---
-- name: Create dir for postgres_exporter
+- name: Enable postgres_exporter port in firewalld
+  firewalld:
+    permanent: yes
+    port: 9187/tcp
+    state: enabled
+
+- name: Create dir for exporters
   file:
-   path: /data/postgres_exporter/
+   path: "{{ item }}"
    owner: postgres
    group: postgres
    state: directory
    mode: '0770'
+  loop:
+   - /var/lib/pgsql/exporters
+   - /var/lib/pgsql/exporters/postgres_exporter
 
 - name: Download and extract archive
   unarchive:
     src: "{{ PGEXP_ARCH_URL }}"
-    dest: /data/postgres_exporter/
+    dest: /var/lib/pgsql/exporters/postgres_exporter/
     remote_src: yes
     extra_opts: [--strip-components=1]
     mode: 0776
@@ -24,7 +33,7 @@
 - name: Copy metrics file
   copy:
     src: files/metrics.yaml
-    dest: /var/lib/pgsql/
+    dest: /var/lib/pgsql/exporters/postgres_exporter/
     owner: postgres
     group: postgres
 

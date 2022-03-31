@@ -1,2 +1,4 @@
 ---
-# handlers file for pg_single_install
+- name: Reboot machine
+  reboot:
+    msg: "This VM will be reboot now"

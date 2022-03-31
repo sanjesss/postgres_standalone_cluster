@@ -1,15 +1,8 @@
 ---
 - name: install Filebeat rpm with YUM
-  yum:
+  package:
     name: "{{ FILEBEAT_RPM_URL }}"
     state: present
-  when: ansible_pkg_mgr == "yum"
-
-- name: install Filebeat rpm with DNF
-  dnf:
-    name: "{{ FILEBEAT_RPM_URL }}"
-    state: present
-  when: ansible_pkg_mgr == "dnf"
 
 - name: Generate postgresql_module config file
   template:
@@ -28,7 +21,7 @@
     group: root
 
 - name: Enabled postgresql module
-  shell: filebeat modules enable postgresql
+  command: filebeat modules enable postgresql
     
 - name: Make sure a service unit filebeat is running
   systemd:
