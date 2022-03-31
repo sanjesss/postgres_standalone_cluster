@@ -47,7 +47,7 @@
 - name: Delete files old cluster if exist
   command: rm -rf /data/pgsql/*
   when: confirm_delete.user_input | bool
-  
+
 # - name: Get running processes postmaster
 #   shell: "ps -ef | grep -v grep | grep -w \"/usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/postgres\" | awk '{print $2}'"
 #   register: running_processes
@@ -107,6 +107,29 @@
       become: true
       become_user: postgres
 
+    # - name: Add password for postgres user
+    #   command: psql -c "ALTER USER postgres PASSWORD '{{ PG_POSTGRES_PASS }}';"
+    #   become: true
+    #   become_user: postgres
+
+    - name: Add password for postgres user
+      postgresql_query:
+        db: postgres
+        query: ALTER USER postgres PASSWORD '{{ PG_POSTGRES_PASS }}'
+
+    # - name: Create extension pg_stat_statements
+    #   command: psql -c "CREATE EXTENSION pg_stat_statements;"
+    #   become: true
+    #   become_user: postgres
+
+    - name: Create extension pg_stat_statements
+      postgresql_query:
+        db: postgres
+        query: CREATE EXTENSION pg_stat_statements;
+
+  when: repl_mode is defined and repl_mode == 'master' or repl_mode is not defined
+
+- block:
     # - name: Create user for replication
     #   command: psql -U postgres -d postgres -p {{ PG_PORT }} -q -c "CREATE USER {{ PG_REPL_USERNAME }} REPLICATION LOGIN PASSWORD '{{ PG_REPL_PASSWORD }}';"
     #   become: true
@@ -138,27 +161,7 @@
         - local replication {{ PG_REPL_USERNAME }} trust
         - host replication {{ PG_REPL_USERNAME }} samenet trust
 
-    # - name: Add password for postgres user
-    #   command: psql -c "ALTER USER postgres PASSWORD '{{ PG_POSTGRES_PASS }}';"
-    #   become: true
-    #   become_user: postgres
-
-    - name: Add password for postgres user
-      postgresql_query:
-        db: postgres
-        query: ALTER USER postgres PASSWORD '{{ PG_POSTGRES_PASS }}'
-
-    # - name: Create extension pg_stat_statements
-    #   command: psql -c "CREATE EXTENSION pg_stat_statements;"
-    #   become: true
-    #   become_user: postgres
-
-    - name: Create extension pg_stat_statements
-      postgresql_query:
-        db: postgres
-        query: CREATE EXTENSION pg_stat_statements;
-
-  when: repl_mode is defined and repl_mode == 'master' or repl_mode is not defined
+  when: repl_mode is defined and repl_mode == 'master'
 
 - block:
 
