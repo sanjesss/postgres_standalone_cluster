@@ -1,6 +1,6 @@
 ---
 - name: Disable SELinux
-  selinux:
+  ansible.posix.selinux:
     state: disabled
   notify: Reboot machine
 
@@ -14,6 +14,4 @@
   package:
     name: "glibc-langpack-ru"
     state: present
-  when:
-    - ansible_facts['os_familhy'] == "RedHat" 
-    - ansible_facts['distribution_major_version'] == "8"
+  when: ansible_facts['distribution_major_version'] == "8"

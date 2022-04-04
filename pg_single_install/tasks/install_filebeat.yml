@@ -1,7 +1,7 @@
 ---
 - name: install Filebeat rpm with YUM
   package:
-    name: "{{ FILEBEAT_RPM_URL }}"
+    name: "http://binary.moscow.alfaintra.net/artifactory/rpm-postgresql-materials/filebeat/rpm/filebeat-7.16.1-x86_64.rpm"
     state: present
 
 - name: Generate postgresql_module config file

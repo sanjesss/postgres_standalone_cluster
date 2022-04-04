@@ -1,13 +1,21 @@
 ---
+- name: Install PostgreSQL repo
+  template:
+    src: templates/postgresql.repo.j2
+    dest: /etc/yum.repos.d/postgresql.repo
+    mode: '0644'
+    owner: root
+    group: root
+
 - name: install Postgres rpm's with YUM
   package:
     name: "{{ item }}"
     state: present
   loop:
-    - "{{ PG_LIBS_URL }}"
-    - "{{ PG_CLIENT_URL }}"
-    - "{{ PG_SERVER_URL }}"
-    - "{{ PG_CONTRIB_URL }}"
+    - "postgresql{{ PG_VERSION_NUMBER }}-libs"
+    - "postgresql{{ PG_VERSION_NUMBER }}"
+    - "postgresql{{ PG_VERSION_NUMBER }}-server"
+    - "postgresql{{ PG_VERSION_NUMBER }}-contrib"
 
 - name: Create dir for PostgreSQL
   file:
@@ -36,7 +44,7 @@
   pause:
     prompt: "This command will destroy the cluster if it exists. Are you sure? (yes/no)"
   register: confirm_delete
-  when: flush
+  when: DESTROY_CLUSTER | bool
 
 - name: Stop postgresql service if exist
   systemd:
@@ -48,19 +56,11 @@
   command: rm -rf /data/pgsql/*
   when: confirm_delete.user_input | bool
 
-# - name: Get running processes postmaster
-#   shell: "ps -ef | grep -v grep | grep -w \"/usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/postgres\" | awk '{print $2}'"
-#   register: running_processes
-
-# - name: Kill running processes postmaster
-#   shell: "kill {{ item }}"
-#   with_items: "{{ running_processes.stdout_lines }}"
-
-# - name: Waiting until all running processes postmaster are killed
-#   wait_for:
-#     path: "/proc/{{ item }}/status"
-#     state: absent
-#   with_items: "{{ running_processes.stdout_lines }}"
+- name: Stop pg_cluster
+  command: /usr/pgsql-{{ PG_VERSION_NUMBER }}/bin/pg_ctl -D /data/pgsql stop
+  become: true
+  become_user: postgres
+  when: confirm_delete.user_input | bool
 
 - block:
 
@@ -150,7 +150,7 @@
         db: postgres
         query: SELECT pg_create_physical_replication_slot('{{ PG_REPL_SLOT_NAME }}')
 
-    - name: Create and filling new pg_hba.conf
+    - name: Add entries new pg_hba.conf
       lineinfile:
         dest: /data/pgsql/pg_hba.conf
         line: "{{ item  }}"

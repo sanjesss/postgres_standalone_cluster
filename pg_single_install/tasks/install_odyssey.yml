@@ -20,7 +20,7 @@
 
 - name: Extract archive
   unarchive:
-    src: "{{ PG_ODYSSEY_BIN_URL }}"
+    src: "http://binary.moscow.alfaintra.net/artifactory/generic-postgresql-materials/odyssey/bin/1.1/odyssey.linux-amd64.1.0.tar.gz"
     dest: /data/odyssey
     remote_src: yes
     mode: 0776

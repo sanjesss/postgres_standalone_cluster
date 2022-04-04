@@ -29,7 +29,7 @@
   tags:
     - install Odyssey
 
-- name: Install node_exporter
+- name: Install node_exporterfor Prometheus
   import_tasks: install_node_exporter.yml
   when: INSTALL_NODE_EXP | bool
   tags:

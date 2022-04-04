@@ -8,13 +8,13 @@
 # host3 
 
 [pg_master]
-#vedupostgre3 repl_mode=master
+postgres1 repl_mode=master
 
 [pg_replica]
-#vedupostgre4 repl_mode=replica
+postgres2 repl_mode=replica
 
 [pg_standalone]
-vedupostgre3
+postgres3
 
 [postgresql:children]
 pg_master

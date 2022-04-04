@@ -74,7 +74,7 @@
 2. [Репозиторий пакетов](https://binary.alfabank.ru/artifactory/rpm-postgresql-materials/)
 3. [Репозиторий PostgreSQL](http://binary.alfabank.ru/artifactory/postgresql/repos/yum/)
 
-Бэклог:
+Доработки:
 ------------
 
 1. Создание подпапок в в /data (Выполнено)
@@ -105,6 +105,3 @@
 26. Переработка процесса установки master-replica. (Выполнено)
 27. Создание выделенной директории для бекапов /backup. (Выполнено)
 28. Фикс директории для логов. (Выполнено)
-29. Раскатка с SSL
-30. Добавить пути к бинаникам в PATH
-31. Доабвить кастомный ~/.psqlrc, изменить параметры PROMPT1 и PROMPT2

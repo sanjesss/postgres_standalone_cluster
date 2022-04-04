@@ -18,7 +18,7 @@
 
 - name: Download and extract archive
   unarchive:
-    src: "{{ PGEXP_ARCH_URL }}"
+    src: http://binary.moscow.alfaintra.net/artifactory/generic-postgresql-materials/postgres_exporter/bin/postgres_exporter-0.10.0.linux-amd64.tar
     dest: /var/lib/pgsql/exporters/postgres_exporter/
     remote_src: yes
     extra_opts: [--strip-components=1]
